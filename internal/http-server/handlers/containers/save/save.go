@@ -38,6 +38,7 @@ func New(log *slog.Logger, contSaver ContSaver) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
+		//var req Req
 		var req models.Container
 
 		err := render.DecodeJSON(r.Body, &req)

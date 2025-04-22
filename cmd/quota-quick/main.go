@@ -2,12 +2,14 @@ package main
 
 import (
 	"api.quota-quick/api/internal/config"
+	"api.quota-quick/api/internal/http-server/handlers/containers/delete"
 	"api.quota-quick/api/internal/http-server/handlers/containers/get"
 	"api.quota-quick/api/internal/http-server/handlers/containers/save"
 	"api.quota-quick/api/internal/lib/logger/handlers/slogpretty"
 	"api.quota-quick/api/internal/lib/logger/sl"
 	"api.quota-quick/api/internal/storage/postgresql"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"log/slog"
@@ -27,7 +29,11 @@ func main() {
 
 	log := setupLogger(conf.Env)
 
-	log.Info("starting quota quick ^_^ ;)", slog.String("env", conf.Env))
+	log.Info(
+		"starting quota quick ^_^ ;)",
+		slog.String("env", conf.Env),
+		slog.String("version", "123"),
+	)
 	log.Debug("debug messages enabled")
 
 	str, err := postgresql.GetConnStr(conf)
@@ -58,9 +64,18 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/containers", save.New(log, storage))
+	router.Route("/api", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("quota-quick", map[string]string{
+			conf.HTTPServer.User: conf.HTTPServer.Password,
+		}))
+		r.Get("/containers/{id}", get.GetById(log, storage))
+
+		r.Post("/containers", save.New(log, storage))
+
+		r.Delete("/containers/{id}", delete.DeleteById(log, storage))
+	})
+
 	//router.Get("/containers", get.GetAll(log, storage))
-	router.Get("/containers/{id}", get.GetById(log))
 	//router.Get("/containers/user/{id}", get.GetByUserId(log, storage))
 
 	log.Info("starting server", slog.String("address", conf.Addr))

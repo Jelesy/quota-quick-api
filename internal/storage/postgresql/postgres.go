@@ -37,7 +37,10 @@ func New(connStr string) (*Storage, error) {
 
 func GetConnStr(cfg *config.Config) (string, error) {
 
-	return fmt.Sprintf("host=localhost port=5433 user=%s password=%s dbname=%s sslmode=%s", cfg.User, cfg.Password, cfg.Dbname, cfg.Sslmode), nil
+	return fmt.Sprintf(
+		"host=localhost port=5433 user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.User, cfg.Database.Password, cfg.Database.Dbname, cfg.Database.Sslmode,
+	), nil
 }
 
 // Если не будет таблиц, до нужно будет их создать
@@ -132,7 +135,7 @@ func (s *Storage) GetAllContainers() ([]models.Container, error) {
 	return conts, nil
 }
 
-func (s *Storage) DeleteContainerById(id int) error {
+func (s *Storage) DeleteContainerById(id uint64) error {
 	const op = "storage.postgres.DeleteContainerById"
 
 	stmt, err := s.db.Prepare("DELETE FROM containers WHERE id=$1")

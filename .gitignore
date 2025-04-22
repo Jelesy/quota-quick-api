@@ -31,4 +31,4 @@ config
 # GoLand
 /.idea
 
-go.sum
+# go.sum
